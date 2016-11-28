@@ -6,10 +6,11 @@ using System.Collections.Generic;
 
 
 public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
-
 	public Text canvasTextTag;
 
 	private float currentSpeed = 500;
+	private Quaternion prevRotation;
+	private GameObject camera;
 
 	private string message = "";
 	private bool displayInfo = false; 
@@ -20,8 +21,12 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 	Dictionary<string, string> clickableItems = new Dictionary<string, string>();
 
 	void Start() {
+		camera = GameObject.Find ("MainCamera");
+
 		canvasTextTag = GameObject.Find ("Text").GetComponent<Text> ();
 		canvasTextTag.color = Color.clear;
+
+		prevRotation = camera.transform.rotation;
 
 		clickableItems.Add("ClickableCube", "This is a cube!");
 		FadeText ();
@@ -33,6 +38,7 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 		FadeText ();
 		TapOnObject ();
 		AnimateObjects ();
+		DetectCameraMovement ();
 	}
 
 	void AnimateObjects () {
@@ -41,7 +47,9 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 	}
 
 	void DetectCameraMovement (){
-		GameObject camera = GameObject.Find ("MainCamera");
+		float angle = Quaternion.Angle(prevRotation, camera.transform.rotation);
+		currentSpeed = angle*200+300;
+		prevRotation = camera.transform.rotation;
 	}
 
 	void TapOnObject () {
