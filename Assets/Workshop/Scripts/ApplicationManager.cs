@@ -8,37 +8,64 @@ using System.Collections.Generic;
 public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 	public Text canvasTextTag;
 
-	private float currentSpeed = 500;
+	private float currentSpeed = 100;
+	private float currentLife = 100;
 	private Quaternion prevRotation;
 	private GameObject camera;
+	private GameObject cameraParent;
 
 	private string message = "";
 	private bool displayInfo = false; 
 	private bool firstMessage = true;
 	private float currentDelay = 0;
-	private int objectDelay = 3; 
-	private int initialDelay = 7;
+	private int objectDelay = 5; 
+	private int initialDelay = 15;
 	Dictionary<string, string> clickableItems = new Dictionary<string, string>();
 
+	private ScreenFaderSphere screenFader;
+
 	void Start() {
+		screenFader = GameObject.Find("Sphere_Inv").GetComponent<ScreenFaderSphere> ();
+
 		camera = GameObject.Find ("MainCamera");
+		cameraParent = GameObject.Find ("MainCameraParent");
 
 		canvasTextTag = GameObject.Find ("Text").GetComponent<Text> ();
 		canvasTextTag.color = Color.clear;
 
 		prevRotation = camera.transform.rotation;
 
-		clickableItems.Add("ClickableCube", "This is a cube!");
+		clickableItems.Add("ClickableDrawing", "Your son’s first drawing. You have cherished this image for as long as you can remember.");
+		clickableItems.Add("ClickablePhoto", "Your beautiful family. They have brought you so much joy in your life and have been there whenever you needed them. ");
+		clickableItems.Add("ClickableScarf", "Your sister’s scarf. You gave her this scarf as a gift when she graduated university.  She loves you and how you supported her through her difficult time in school.");
+		clickableItems.Add("ClickableRing", "Your wedding band. Shouldn’t it be on your finger?  No, wait- they have to remove all jewelry before surgery. You and your spouse are so in love, even after all these years. ");
+		clickableItems.Add("ClickableMri", "A scan of your brain. To think just a blink of the eye ago it was perfectly fine. Now it is uncertain whether it will allow you to keep living.");
 		FadeText ();
 		displayInfo = true;
-		message = "You are in coma.\n\nFind MEMORIES  to latch onto, to avoid losing conciousness.\n\nMoving takes TIME.";
+		message = "Your head hit the ground. The doctors took you into surgery right away. They managed to stop the bleeding in your brain but you never woke up. You slipped into a coma.\n\n The doctors think it is only a matter of time before you pass. Your family is in deep agony. Some have hope you will survive, others are starting to accept you will never be with them again. Maybe if you keep holding on and find memories to give you strength to keep going, you will wake from the coma. ";
 	}
 
 	void Update () {
 		FadeText ();
 		TapOnObject ();
 		AnimateObjects ();
+		DeathProgression ();
 		DetectCameraMovement ();
+	}
+
+	void DeathProgression () {
+		if(currentLife>50) {
+			currentLife -= 0.01f;
+		}else {
+			currentLife -= 0.01f;
+			screenFader.fadeToBlack ();
+		}
+		cameraParent.transform.localPosition = new Vector3(-729.82f,-373.55f+Mathf.Abs(currentLife-100)*10/100,0.26f);
+
+		Light light = GameObject.Find ("MainLight").GetComponent<Light> ();
+		Light light2 = GameObject.Find ("MainLight").GetComponent<Light> ();
+		light.intensity = currentLife / 25 * 2;
+		light2.intensity = currentLife / 50;
 	}
 
 	void AnimateObjects () {
@@ -62,7 +89,7 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 
 	void DetectCameraMovement (){
 		float angle = Quaternion.Angle(prevRotation, camera.transform.rotation);
-		currentSpeed = angle*50+200*Time.deltaTime;
+		currentSpeed = angle*25+200*Time.deltaTime-Mathf.Abs(currentLife-100)/10;
 		prevRotation = camera.transform.rotation;
 	}
 
