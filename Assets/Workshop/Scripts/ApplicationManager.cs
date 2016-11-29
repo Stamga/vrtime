@@ -14,6 +14,11 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 	private GameObject camera;
 	private GameObject cameraParent;
 
+	private GameObject fan;
+	private GameObject handHours;
+	private GameObject handSeconds;
+	private GameObject heartMonitor;
+
 	private string message = "";
 	private bool displayInfo = false; 
 	private bool firstMessage = true;
@@ -26,6 +31,11 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 
 	void Start() {
 		screenFader = GameObject.Find("Sphere_Inv").GetComponent<ScreenFaderSphere> ();
+
+		GameObject fan = GameObject.Find ("CeilingFan");
+		GameObject handHours = GameObject.Find ("HandHours");
+		GameObject handSeconds = GameObject.Find ("HandSeconds");
+		GameObject heartMonitor = GameObject.Find ("HeartBeatGraph");
 
 		camera = GameObject.Find ("MainCamera");
 		cameraParent = GameObject.Find ("MainCameraParent");
@@ -69,16 +79,9 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 	}
 
 	void AnimateObjects () {
-		GameObject fan = GameObject.Find ("CeilingFan");
 		fan.transform.Rotate (0,0 ,currentSpeed);
-
-		GameObject handHours = GameObject.Find ("HandHours");
 		handHours.transform.Rotate (0,currentSpeed/1000,0);
-
-		GameObject handSeconds = GameObject.Find ("HandSeconds");
 		handSeconds.transform.Rotate (0,currentSpeed/150,0);
-
-		GameObject heartMonitor = GameObject.Find ("HeartBeatGraph");
 		double heartPosition = heartMonitor.transform.localPosition.x;
 		if(heartPosition > 0) {
 			heartMonitor.transform.Translate (Vector3.left * currentSpeed/200);
