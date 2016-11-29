@@ -42,13 +42,27 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 	}
 
 	void AnimateObjects () {
-		GameObject cube = GameObject.Find ("CeilingFan");
-		cube.transform.Rotate (0,0 ,currentSpeed * Time.deltaTime);
+		GameObject fan = GameObject.Find ("CeilingFan");
+		fan.transform.Rotate (0,0 ,currentSpeed);
+
+		GameObject handHours = GameObject.Find ("HandHours");
+		handHours.transform.Rotate (0,currentSpeed/1000,0);
+
+		GameObject handSeconds = GameObject.Find ("HandSeconds");
+		handSeconds.transform.Rotate (0,currentSpeed/150,0);
+
+		GameObject heartMonitor = GameObject.Find ("HeartBeatGraph");
+		double heartPosition = heartMonitor.transform.localPosition.x;
+		if(heartPosition > 0) {
+			heartMonitor.transform.Translate (Vector3.left * currentSpeed/200);
+		}else {
+			heartMonitor.transform.localPosition = new Vector3(1.7f,0,0);
+		}
 	}
 
 	void DetectCameraMovement (){
 		float angle = Quaternion.Angle(prevRotation, camera.transform.rotation);
-		currentSpeed = angle*200+300;
+		currentSpeed = angle*50+200*Time.deltaTime;
 		prevRotation = camera.transform.rotation;
 	}
 
