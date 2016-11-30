@@ -8,8 +8,6 @@ using System.Collections.Generic;
 public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 	public Text canvasTextTag;
 
-	private float currentSpeed = 100;
-	private float currentLife = 100;
 	private Quaternion prevRotation;
 	private GameObject camera;
 	private GameObject cameraParent;
@@ -19,12 +17,30 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 	private GameObject handSeconds;
 	private GameObject heartMonitor;
 
+	private AudioSource dropSound;
+	private AudioSource clockSound;
+	private AudioSource heartSound;
+	private AudioSource heartDeadSound;
+	private AudioSource fanSound;
+
+	private Light light;
+	private Light light2;
+
 	private string message = "";
+
 	private bool displayInfo = false; 
 	private bool firstMessage = true;
+	private bool isHealing = false;
+	private bool gameStarted = false;
+
+	private float currentSpeed = 100;
+	private float currentLife = 100;
 	private float currentDelay = 0;
+
+	private int healingProgress = 0;
 	private int objectDelay = 5; 
 	private int initialDelay = 15;
+
 	Dictionary<string, string> clickableItems = new Dictionary<string, string>();
 
 	private ScreenFaderSphere screenFader;
@@ -32,16 +48,11 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 	void Start() {
 		screenFader = GameObject.Find("Sphere_Inv").GetComponent<ScreenFaderSphere> ();
 
-		GameObject fan = GameObject.Find ("CeilingFan");
-		GameObject handHours = GameObject.Find ("HandHours");
-		GameObject handSeconds = GameObject.Find ("HandSeconds");
-		GameObject heartMonitor = GameObject.Find ("HeartBeatGraph");
+		canvasTextTag = GameObject.Find ("Text").GetComponent<Text> ();
+		canvasTextTag.color = Color.clear;
 
 		camera = GameObject.Find ("MainCamera");
 		cameraParent = GameObject.Find ("MainCameraParent");
-
-		canvasTextTag = GameObject.Find ("Text").GetComponent<Text> ();
-		canvasTextTag.color = Color.clear;
 
 		prevRotation = camera.transform.rotation;
 
@@ -56,35 +67,61 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 	}
 
 	void Update () {
-		FadeText ();
-		TapOnObject ();
-		AnimateObjects ();
-		DeathProgression ();
-		DetectCameraMovement ();
+		if (!gameStarted) {
+
+			dropSound = GameObject.Find ("DropSound").GetComponent<AudioSource> ();
+			clockSound = GameObject.Find ("ClockSound").GetComponent<AudioSource> ();
+			heartSound = GameObject.Find ("HeartSound").GetComponent<AudioSource> ();
+			heartDeadSound = GameObject.Find ("HeartDeadSound").GetComponent<AudioSource> ();
+			fanSound = GameObject.Find ("FanSound").GetComponent<AudioSource> ();
+
+			fan = GameObject.Find ("CeilingFan");
+			handHours = GameObject.Find ("HandHours");
+			handSeconds = GameObject.Find ("HandSeconds");
+			heartMonitor = GameObject.Find ("HeartBeatGraph");
+
+			light = GameObject.Find ("MainLight").GetComponent<Light> ();
+			light2 = GameObject.Find ("SideLight").GetComponent<Light> ();
+			gameStarted = true;
+		} else {
+			FadeText ();
+			TapOnObject ();
+			AnimateObjects ();
+			DeathProgression ();
+			DetectCameraMovement ();
+		}
 	}
 
 	void DeathProgression () {
-		if(currentLife>50) {
+		if (isHealing) {
+			currentLife += 0.02f;
+			healingProgress++;
+		}if(currentLife > 60) {
 			currentLife -= 0.01f;
 		}else {
 			currentLife -= 0.01f;
 			screenFader.fadeToBlack ();
+			heartDeadSound.Play();
 		}
+
+		if (healingProgress > 500) {
+			healingProgress = 0;
+			isHealing = false;
+		}
+
 		cameraParent.transform.localPosition = new Vector3(-729.82f,-373.55f+Mathf.Abs(currentLife-100)*10/100,0.26f);
 
-		Light light = GameObject.Find ("MainLight").GetComponent<Light> ();
-		Light light2 = GameObject.Find ("MainLight").GetComponent<Light> ();
-		light.intensity = currentLife / 25 * 2;
-		light2.intensity = currentLife / 50;
+		light.intensity = 2.33f*currentLife/100;
+		light2.intensity = 0.6f*currentLife/100;
 	}
 
 	void AnimateObjects () {
-		fan.transform.Rotate (0,0 ,currentSpeed);
-		handHours.transform.Rotate (0,currentSpeed/1000,0);
-		handSeconds.transform.Rotate (0,currentSpeed/150,0);
+		fan.transform.Rotate (0,0 ,currentSpeed*7);
+		handHours.transform.Rotate (0,currentSpeed/100,0);
+		handSeconds.transform.Rotate (0,currentSpeed/10,0);
 		double heartPosition = heartMonitor.transform.localPosition.x;
 		if(heartPosition > 0) {
-			heartMonitor.transform.Translate (Vector3.left * currentSpeed/200);
+			heartMonitor.transform.Translate (Vector3.left * ((currentSpeed*200)*Time.deltaTime)/200);
 		}else {
 			heartMonitor.transform.localPosition = new Vector3(1.7f,0,0);
 		}
@@ -92,8 +129,12 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 
 	void DetectCameraMovement (){
 		float angle = Quaternion.Angle(prevRotation, camera.transform.rotation);
-		currentSpeed = angle*25+200*Time.deltaTime-Mathf.Abs(currentLife-100)/10;
+		currentSpeed = angle/50+1-Mathf.Abs(currentLife-100)/50;
 		prevRotation = camera.transform.rotation;
+		dropSound.pitch = currentSpeed;
+		fanSound.pitch = currentSpeed;
+		clockSound.pitch = currentSpeed;
+		heartSound.pitch = currentSpeed;
 	}
 
 	void TapOnObject () {
@@ -102,6 +143,9 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 			if(clickableItems.TryGetValue(objHitByRay.name, out message))
 			{
 				displayInfo = true;
+				if (!isHealing) {
+					isHealing = true;
+				}
 			}
 			else
 			{
