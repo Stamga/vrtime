@@ -28,6 +28,11 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 
 	private string message = "";
 
+	private float speedH = 2.0f;
+	private float speedV = 2.0f;
+	private float yaw = 0.0f;
+	private float pitch = 0.0f;
+
 	private bool displayInfo = false; 
 	private bool firstMessage = true;
 	private bool isHealing = false;
@@ -38,8 +43,8 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 	private float currentDelay = 0;
 
 	private int healingProgress = 0;
-	private int objectDelay = 5; 
-	private int initialDelay = 15;
+	private int objectDelay = 8; 
+	private int initialDelay = 20;
 
 	Dictionary<string, string> clickableItems = new Dictionary<string, string>();
 
@@ -84,11 +89,12 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 			light2 = GameObject.Find ("SideLight").GetComponent<Light> ();
 			gameStarted = true;
 		} else {
-			FadeText ();
-			TapOnObject ();
-			AnimateObjects ();
 			DeathProgression ();
+			AnimateObjects ();
 			DetectCameraMovement ();
+			RotateCameraMouse ();
+			TapOnObject ();
+			FadeText ();
 		}
 	}
 
@@ -135,6 +141,13 @@ public class ApplicationManager : SingletonMonoBehaviour<ApplicationManager> {
 		fanSound.pitch = currentSpeed;
 		clockSound.pitch = currentSpeed;
 		heartSound.pitch = currentSpeed;
+	}
+
+	void RotateCameraMouse () {
+		yaw += speedH * Input.GetAxis("Mouse X");
+		pitch -= speedV * Input.GetAxis("Mouse Y");
+
+		camera.transform.eulerAngles = new Vector3(pitch, yaw, 0.0f);
 	}
 
 	void TapOnObject () {
